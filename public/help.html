@@ -1,0 +1,101 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+  <meta charset="UTF-8" />
+  <meta name="viewport" content="width=device-width, initial-scale=1.0, maximum-scale=1.0" />
+  <meta name="theme-color" content="#3b82f6" />
+  <link rel="manifest" href="/manifest.json" />
+  <title>Help Desk | Civic AI</title>
+  <link rel="stylesheet" href="/css/style.css" />
+</head>
+<body>
+  <div class="bg-glow" aria-hidden="true"></div>
+  <nav class="navbar">
+    <div class="nav-brand"><a href="index.html">Civic AI</a></div>
+    <button class="hamburger" id="hamburgerBtn" type="button" aria-label="Menu"><span></span><span></span><span></span></button>
+    <div class="nav-overlay" id="navOverlay"></div>
+    <div class="nav-menu" id="navMenu">
+      <a href="index.html">Home</a>
+      <a href="cases.html">Cases</a>
+      <a href="report.html">Report Issue</a>
+      <a href="team.html">Team Hexagon</a>
+      <a href="help.html" class="active">Help Desk</a>
+      <div id="authArea"></div>
+    </div>
+  </nav>
+  <main class="container">
+    <h1 class="page-title">Help Desk</h1>
+    <p class="page-subtitle">Get help with Civic AI</p>
+    <div class="help-options">
+      <div class="help-card" onclick="toggleChat()">
+        <div class="icon">🤖</div>
+        <h3>Self Help</h3>
+        <p style="color:var(--muted);font-size:0.9rem">Chat with the assistant</p>
+      </div>
+      <div class="help-card" id="msgCard">
+        <div class="icon">✉️</div>
+        <h3>Message Admins</h3>
+        <p style="color:var(--muted);font-size:0.9rem">Send a note to the team (Discord)</p>
+      </div>
+    </div>
+    <div class="card hidden" id="msgFormCard" style="margin-top:1rem">
+      <h3 style="margin-bottom:0.75rem">Send message</h3>
+      <div class="form-group">
+        <label>Title</label>
+        <input type="text" class="form-control" id="msgTitle" placeholder="Subject" />
+      </div>
+      <div class="form-group">
+        <label>Message</label>
+        <textarea class="form-control" id="msgBody" placeholder="Your message"></textarea>
+      </div>
+      <div id="msgAlert"></div>
+      <button type="button" class="btn btn-primary" id="sendMsgBtn">Send</button>
+    </div>
+  </main>
+  <footer class="footer"><p>© 2026 Civic AI</p><p class="powered">Powered by <strong>Dex</strong></p></footer>
+  <button class="chatbot-toggle" id="chatToggle" type="button">💬</button>
+  <div class="chatbot-window" id="chatWindow">
+    <div class="chatbot-header"><span>Assistant</span>
+      <button type="button" onclick="toggleChat()" style="background:none;border:none;color:#fff;font-size:1.2rem;cursor:pointer">✕</button>
+    </div>
+    <div class="chatbot-messages" id="chatMessages"><div class="chat-msg bot">How can I help?</div></div>
+    <div class="chatbot-input-area">
+      <input type="text" id="chatInput" placeholder="Ask…" onkeydown="if(event.key==='Enter')sendChat()" />
+      <button type="button" onclick="sendChat()">Send</button>
+    </div>
+  </div>
+  <script src="/js/app.js"></script>
+  <script src="/js/auth.js"></script>
+  <script src="/js/chatbot.js"></script>
+  <script>
+    document.addEventListener('DOMContentLoaded', () => {
+      initAuthUI();
+      document.getElementById('msgCard').addEventListener('click', () => {
+        document.getElementById('msgFormCard').classList.toggle('hidden');
+      });
+      document.getElementById('sendMsgBtn').addEventListener('click', async () => {
+        const title = document.getElementById('msgTitle').value.trim();
+        const body = document.getElementById('msgBody').value.trim();
+        const alert = document.getElementById('msgAlert');
+        if (!title || !body) {
+          alert.innerHTML = '<div class="alert alert-error">Title and message required</div>';
+          return;
+        }
+        const user = getCurrentUser();
+        const res = await api('/api/message', {
+          method: 'POST',
+          body: JSON.stringify({ title, body, from: user ? user.username : 'Anonymous' })
+        });
+        if (res.ok) {
+          alert.innerHTML = '<div class="alert alert-success">Sent to admins</div>';
+          if (typeof showToast === 'function') showToast('Message sent', 'success');
+          document.getElementById('msgTitle').value = '';
+          document.getElementById('msgBody').value = '';
+        } else {
+          alert.innerHTML = '<div class="alert alert-error">' + (res.message || 'Failed') + '</div>';
+        }
+      });
+    });
+  </script>
+</body>
+</html>
